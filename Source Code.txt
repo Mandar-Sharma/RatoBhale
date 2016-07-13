@@ -1,0 +1,221 @@
+#include<iostream>
+#include "SDL/SDL_image.h"
+#include "SDL/SDL.h"
+#include<string>
+#include "SDL/SDL_ttf.h"
+
+using namespace std;
+//The attributes of the screen
+const int SCREEN_WIDTH = 1024;
+const int SCREEN_HEIGHT = 650;
+const int SCREEN_BPP = 32;
+
+
+//The surfaces that will be used
+SDL_Surface *bhale = NULL;
+SDL_Surface *background = NULL;
+SDL_Surface *screen = NULL;
+SDL_Surface *score=NULL;
+SDL_Rect clip[ 8 ];
+
+//The font being used
+TTF_Font *font = NULL;
+//The color of the font
+SDL_Color textColor = { 255, 255, 255 };
+
+class startandendstuff
+{
+public:
+    bool startstuff()
+    {
+            //Start SDL
+        if( SDL_Init( SDL_INIT_EVERYTHING ) == -1 )
+        {
+            return 1;
+        }
+        //Initialize SDL_ttf
+        if( TTF_Init() == -1 )
+        {
+            return false;
+        }
+        //Set up screen
+
+        screen = SDL_SetVideoMode( SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_BPP, SDL_SWSURFACE );
+
+        //If there was an error in setting up the screen
+        if( screen == NULL )
+        {
+            return 1;
+        }
+
+        SDL_WM_SetCaption("The Rato Bhale Saga",NULL);
+
+
+        //If everything initialized fine
+        return true;
+        }
+        void endstuff()
+    {
+             //Free the surfaces
+        SDL_FreeSurface( bhale );
+        SDL_FreeSurface( background );
+        SDL_FreeSurface(score);
+        //Close the font that was used
+        TTF_CloseFont( font );
+
+        //Quit SDL_ttf
+        TTF_Quit();
+        //Quit SDL
+        SDL_Quit();
+    }
+};
+class image
+{
+public:
+    SDL_Surface *load_image(std::string filename)
+    {
+        //Temporary storage for the image that's loaded
+    SDL_Surface* loadedImage = NULL;
+
+    //The optimized image that will be used
+    SDL_Surface* optimizedImage = NULL;
+
+    //Load the image
+    loadedImage = IMG_Load( filename.c_str() );
+
+    //If nothing went wrong in loading the image
+    if( loadedImage != NULL )
+    {
+        //Create an optimized image
+        optimizedImage = SDL_DisplayFormat( loadedImage );
+
+        //Free the old image
+        SDL_FreeSurface( loadedImage );
+        if( optimizedImage != NULL )
+        {
+            //Map the color key
+          //  Uint32 colorkey = SDL_MapRGB( optimizedImage->format, 0, 0xFF, 0xFF );
+
+            //Set all pixels of color R 0, G 0xFF, B 0xFF to be transparent
+//            SDL_SetColorKey( optimizedImage, SDL_SRCCOLORKEY, colorkey );
+        }
+    }
+
+    //Return the optimized image
+    return optimizedImage;
+    };
+
+    void apply_surface( int x, int y, SDL_Surface* source, SDL_Surface* destination,SDL_Rect* clip = NULL )
+    {
+    //Make a temporary rectangle to hold the offsets
+    SDL_Rect offset;
+
+    //Give the offsets to the rectangle
+    offset.x = x;
+    offset.y = y;
+    //Blit the surface
+    SDL_BlitSurface( source, clip, destination, &offset );
+    };
+};
+int main( int argc, char* args[] )
+{
+    startandendstuff in;
+    in.startstuff();
+
+    Uint8 *keys=NULL;
+    SDL_Event event;
+
+    int flow=1;
+
+    clip[ 0 ].x = 0;
+    clip[ 0 ].y = 0;
+    clip[ 0 ].w = 100;
+    clip[ 0 ].h = 100;
+
+    //Clip range for the top right
+    clip[ 1 ].x = 100;
+    clip[ 1 ].y = 0;
+    clip[ 1 ].w = 100;
+    clip[ 1 ].h = 100;
+
+    //Clip range for the bottom left
+    clip[ 2 ].x = 200;
+    clip[ 2 ].y = 0;
+    clip[ 2 ].w = 100;
+    clip[ 2 ].h = 100;
+
+    //Clip range for the bottom right
+    clip[ 3 ].x = 300;
+    clip[ 3 ].y = 0;
+    clip[ 3 ].w = 100;
+    clip[ 3 ].h = 100;
+
+    clip[ 4 ].x = 0;
+    clip[ 4 ].y = 100;
+    clip[ 4 ].w = 100;
+    clip[ 4 ].h = 100;
+
+    clip[ 5 ].x = 100;
+    clip[ 5 ].y = 100;
+    clip[ 5 ].w = 100;
+    clip[ 5 ].h = 100;
+
+    clip[ 6 ].x = 200;
+    clip[ 6 ].y = 100;
+    clip[ 6 ].w = 100;
+    clip[ 6 ].h = 100;
+
+    clip[ 7 ].x = 300;
+    clip[ 7 ].y = 100;
+    clip[ 7 ].w = 100;
+    clip[ 7 ].h = 100;
+
+
+    //Open the font
+    font = TTF_OpenFont( "font.ttf", 18);
+    //Render the text
+    score = TTF_RenderText_Solid( font, "Score, this is the score", textColor );
+
+    image fb;
+
+    //Load the images
+    background = fb.load_image( "backg.png" );
+    bhale=IMG_Load("bhales.png");
+    //Apply the background to the screen
+
+    fb.apply_surface( 0, 0, score, screen );
+    SDL_Flip(screen);
+    int a=0;
+    int b=0;
+    int c=5;
+    while(flow)
+    {
+        fb.apply_surface( 0, 0, background, screen );
+        fb.apply_surface(40,b,bhale,screen,&clip[a]);
+        SDL_Flip( screen );
+        a=a+1;
+        b=b+c;
+        c=c+2;
+        SDL_Delay( 125 );
+
+        if(a>=7)
+            a=0;
+
+        if(b>570)
+        {
+            b=0;
+            c=5;
+
+        }
+        while(SDL_PollEvent(&event))
+        {
+            if(event.type==SDL_QUIT || event.key.keysym.sym==SDLK_ESCAPE)
+                flow=0;
+        }
+
+    }
+
+    in.endstuff();
+    return 0;
+}
+
